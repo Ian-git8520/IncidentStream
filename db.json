@@ -1,0 +1,103 @@
+{
+  "incidents": [
+    {
+      "id": 6,
+      "type": "Car Accident",
+      "location": "Mombasa Road, Nairobi",
+      "datetime": "2025-09-19T08:45",
+      "description": "Three-car collision during morning traffic. Minor injuries reported.",
+      "status": "Open",
+      "attachments": [
+        "https://example.com/images/car_accident_nairobi.jpg"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "Fire Outbreak",
+      "location": "Downtown Market, Accra",
+      "datetime": "2025-09-17T23:10",
+      "description": "A fire broke out in a busy marketplace. Firefighters on scene.",
+      "status": "In Review",
+      "attachments": [
+        "https://example.com/images/market_fire.jpg"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "Flooding",
+      "location": "Dhaka, Bangladesh",
+      "datetime": "2025-09-16T06:20",
+      "description": "Heavy rains caused streets to flood, blocking traffic and shops.",
+      "status": "Open",
+      "attachments": [
+        "https://example.com/images/flooded_city.jpg"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "Road Hazard",
+      "location": "Lagos–Ibadan Expressway, Nigeria",
+      "datetime": "2025-09-14T14:30",
+      "description": "Large pothole blocking two lanes, causing heavy congestion.",
+      "status": "Open",
+      "attachments": [
+        "https://example.com/images/pothole_highway.jpg"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "Pedestrian Accident",
+      "location": "Oxford Street, London",
+      "datetime": "2025-09-13T18:00",
+      "description": "Pedestrian struck while crossing road. Emergency services called.",
+      "status": "Resolved",
+      "attachments": [
+        "https://example.com/images/pedestrian_accident_uk.jpg"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "Electrical Hazard",
+      "location": "Industrial Zone, Mumbai",
+      "datetime": "2025-09-12T15:10",
+      "description": "Exposed high-voltage cables reported near factory entrance.",
+      "status": "Open",
+      "attachments": [
+        "https://example.com/images/electrical_hazard.jpg"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Vehicle Breakdown",
+      "location": "A104 Highway, Kenya",
+      "datetime": "2025-09-11T09:55",
+      "description": "Truck stalled in the middle of the road, blocking traffic.",
+      "status": "In Review",
+      "attachments": [
+        "https://example.com/images/broken_truck.jpg"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Medical Emergency",
+      "location": "Central Park, New York",
+      "datetime": "2025-09-10T11:20",
+      "description": "Jogger collapsed during morning run. Paramedics on the way.",
+      "status": "Resolved",
+      "attachments": [
+        "https://example.com/images/medical_emergency.jpg"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "Natural Disaster",
+      "location": "Tokyo, Japan",
+      "datetime": "2025-09-09T05:00",
+      "description": "Typhoon winds caused damage to buildings and power lines.",
+      "status": "Open",
+      "attachments": [
+        "https://example.com/images/typhoon_damage.jpg"
+      ]
+    }
+  ]
+}
