@@ -1,51 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
-    <title>Incidentstream</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+  <title>Incidentstream</title>
 </head>
 
-<body>
- <h1>INCIDENTSTREAM</h1>  
-  
-  <input type="text" id="search" placeholder="Search by type or location">
-    <button id="filter-open">Show Open</button>
-  <button id="filter-all">Show All</button>
+<body id="container">
+
+
+
+
+  <nav class="navbar">
+    <h1 class="logo">INCIDENTSTREAM</h1>
+    <div class="nav-controls">
+      <input type="text" id="search" placeholder="Search by type or location">
+      <button id="show-open">Search</button>
+      <button id="show-all">Show All</button>
+      <button id="show-report">Report</button>
+      <button id="toggle-theme">🌙</button>
+
+    </div>
+  </nav>
+
 
   <ul id="incident-list"></ul>
 
- 
+
+  <div class="report">
+    <h2>Report an Incident</h2>
+    <form id="incident-form" enctype="multipart/form-data">
+      <input type="text" id="type" placeholder="Incident Type" required>
+      <input type="text" id="location" placeholder="Location" required>
+      <input type="datetime-local" id="date-time" placeholder="" required>
+      <textarea name="description" id="description" placeholder="Description"></textarea>
+      <input type="file" id="attachments" multiple accept="image/*,video/*">
+      <button type="submit">Add Report</button>
+    </form>
+  </div>
+
+  
+  <div class="ending">
+
+    <p>Catching hazards as they happen, keeping communities safer, smarter and connected</p>
 
 
-  <h2>Report an Incident</h2>
-  <form id="incident-form">
-    <input type="text" id="type" placeholder="Type (e.g. Fire)" required>
-    <input type="text" id="location" placeholder="Location" required>
-    <textarea id="description" placeholder="Description"></textarea>
-    <button type="submit">Submit</button>
-  </form> 
-<div class="ending">
-
-    <p></p>
-
-    
-</div>
+  </div>
 
 
 
+  <script src="js/index.js"></script>
 </body>
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
