@@ -1,56 +1,55 @@
 document.addEventListener("DOMContentLoaded", () => {
   const API_URL = "http://localhost:3080/incidents";
-  const list = document.getElementById("incident-list");
-  const form = document.getElementById("incident-form");
-  const searchInput = document.getElementById("search");
-  const showOpenBtn = document.getElementById("show-open");
-  const showAllBtn = document.getElementById("show-all");
-  const themeToggleBtn = document.getElementById("toggle-theme");
-  const typeInput = document.getElementById("type");
-  const locationInput = document.getElementById("location");
-  const dateTimeInput = document.getElementById("date-time");
-  const descriptionInput = document.getElementById("description");
-  const attachmentsInput = document.getElementById("attachments");
+  const els = {
+    list: document.getElementById("incident-list"),
+    form: document.getElementById("incident-form"),
+    search: document.getElementById("search"),
+    showOpen: document.getElementById("show-open"),
+    showAll: document.getElementById("show-all"),
+    themeToggle: document.getElementById("toggle-theme"),
+    type: document.getElementById("type"),
+    location: document.getElementById("location"),
+    dateTime: document.getElementById("date-time"),
+    description: document.getElementById("description"),
+    attachments: document.getElementById("attachments"),
+    showReport: document.getElementById("show-report")
+  };
 
-  // Preview container for file uploads
   const previewContainer = document.createElement("div");
   previewContainer.id = "preview-container";
   previewContainer.classList.add("d-flex", "gap-2", "flex-wrap", "mt-2");
-  attachmentsInput.insertAdjacentElement("afterend", previewContainer);
+  els.attachments.after(previewContainer);
 
   let selectedFiles = [];
 
-  async function fetchIncidents(status = null) {
+  async function fetchIncidents(status) {
     try {
       const url = status ? `${API_URL}?status=${status}` : API_URL;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      console.log("Fetched incidents:", JSON.stringify(data, null, 2)); // Debug: Log full data
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+      const data = await res.json();
       renderIncidents(data);
-    } catch (error) {
-      console.error("Failed to fetch incidents:", error);
-      list.innerHTML = `<li class="list-group-item text-danger">Failed to load incidents. Please try again later.</li>`;
+    } catch (err) {
+      console.error("Fetch error:", err);
+      els.list.innerHTML = '<li class="list-group-item text-danger">Failed to load incidents.</li>';
     }
   }
 
   function renderIncidents(data) {
-    list.innerHTML = "";
-    list.classList.add("list-group", "mb-3");
-
-    if (!data || data.length === 0) {
-      list.innerHTML = `<li class="list-group-item">No incidents found.</li>`;
+    els.list.innerHTML = "";
+    els.list.classList.add("list-group", "mb-3");
+    if (!data?.length) {
+      els.list.innerHTML = '<li class="list-group-item">No incidents found.</li>';
       return;
     }
 
     data.forEach(incident => {
-      console.log(`Rendering incident ${incident.id}:`, incident); // Debug: Log each incident
       const li = document.createElement("li");
-      li.classList.add("list-group-item", "mb-3", "border", "rounded", "p-0"); // Remove padding from card
+      li.classList.add("list-group-item", "mb-3", "border", "rounded", "p-0");
 
-      const detailsDiv = document.createElement("div");
-      detailsDiv.classList.add("p-3"); // Add padding to details only
-      detailsDiv.innerHTML = `
+      const details = document.createElement("div");
+      details.classList.add("p-3");
+      details.innerHTML = `
         <h5 class="mb-1">${incident.type || "Unknown Type"}</h5>
         <p class="mb-1"><em>${incident.location || "Unknown Location"}</em></p>
         <span class="badge bg-${incident.status === "Open" ? "warning" : "success"}">${incident.status || "Unknown"}</span>
@@ -58,64 +57,34 @@ document.addEventListener("DOMContentLoaded", () => {
         <small class="text-muted">${incident.datetime ? new Date(incident.datetime).toLocaleString() : "Unknown Date"}</small>
       `;
 
-      if (incident.attachments && Array.isArray(incident.attachments) && incident.attachments.length > 0) {
-        console.log(`Attachments for incident ${incident.id}:`, incident.attachments); // Debug: Log attachments
-        const mediaDiv = document.createElement("div");
-        mediaDiv.classList.add("d-flex", "flex-wrap"); // Remove gap-2 and mt-2
-
-        incident.attachments.forEach((file, index) => {
-          if (!file || typeof file !== "string") {
-            console.warn(`Invalid attachment at index ${index} for incident ${incident.id}:`, file);
-            const placeholder = document.createElement("div");
-            placeholder.classList.add("text-danger");
-            placeholder.textContent = "Invalid attachment";
-            mediaDiv.appendChild(placeholder);
-            return;
-          }
-
-          const element = file.includes("data:image")
-            ? createImageElement(file)
-            : file.includes("data:video")
-            ? createVideoElement(file)
-            : null;
-
-          if (element) {
-            mediaDiv.appendChild(element);
-          } else {
-            console.warn(`Unsupported attachment format at index ${index} for incident ${incident.id}:`, file);
-            const placeholder = document.createElement("div");
-            placeholder.classList.add("text-danger");
-            placeholder.textContent = "Unsupported attachment";
-            mediaDiv.appendChild(placeholder);
-          }
+      if (incident.attachments?.length) {
+        const media = document.createElement("div");
+        media.classList.add("d-flex", "flex-wrap");
+        incident.attachments.forEach(file => {
+          const el = file.includes("data:image") ? createImage(file) : file.includes("data:video") ? createVideo(file) : null;
+          if (el) media.appendChild(el);
+          else media.innerHTML += '<div class="text-danger">Unsupported attachment</div>';
         });
-
-        if (mediaDiv.children.length > 0) {
-          li.appendChild(mediaDiv);
-        }
-      } else {
-        console.log(`No valid attachments for incident ${incident.id}`);
+        if (media.children.length) li.appendChild(media);
       }
 
-      li.appendChild(detailsDiv);
+      li.appendChild(details);
 
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Delete";
       deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "me-2");
-      deleteBtn.addEventListener("click", async () => {
-        if (!confirm("Are you sure you want to delete this incident?")) return;
-
+      deleteBtn.onclick = async () => {
+        if (!confirm("Delete this incident?")) return;
         try {
-          const response = await fetch(`${API_URL}/${incident.id}`, { method: "DELETE" });
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+          const res = await fetch(`${API_URL}/${incident.id}`, { method: "DELETE" });
+          if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
           fetchIncidents();
-          showToast("Incident deleted successfully!", "success");
+          showToast("Incident deleted!", "success");
         } catch (err) {
-          console.error("Error deleting incident:", err);
+          console.error("Delete error:", err);
           showToast("Failed to delete incident.", "danger");
         }
-      });
-
+      };
       li.appendChild(deleteBtn);
 
       const commentsDiv = document.createElement("div");
@@ -147,223 +116,146 @@ document.addEventListener("DOMContentLoaded", () => {
       const btn = document.createElement("button");
       btn.textContent = "Post";
       btn.classList.add("btn", "btn-primary", "btn-sm");
-
-      btn.addEventListener("click", async () => {
-        if (!input.value.trim()) {
-          showToast("Please enter a comment.", "warning");
-          return;
-        }
-
-        const updatedComments = [...(incident.comments || []), input.value.trim()];
-
+      btn.onclick = async () => {
+        if (!input.value.trim()) return showToast("Enter a comment.", "warning");
         try {
-          const response = await fetch(`${API_URL}/${incident.id}`, {
+          const res = await fetch(`${API_URL}/${incident.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ comments: updatedComments })
+            body: JSON.stringify({ comments: [...(incident.comments || []), input.value.trim()] })
           });
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+          if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
           fetchIncidents();
-          showToast("Comment posted successfully!", "success");
+          showToast("Comment posted!", "success");
+          input.value = "";
         } catch (err) {
-          console.error("Error posting comment:", err);
+          console.error("Comment error:", err);
           showToast("Failed to post comment.", "danger");
         }
-
-        input.value = "";
-      });
+      };
 
       commentForm.appendChild(input);
       commentForm.appendChild(btn);
       commentsDiv.appendChild(commentForm);
 
-      const commentCount = (incident.comments || []).length;
-      const toggleCommentsBtn = document.createElement("button");
-      toggleCommentsBtn.textContent = `View Comments (${commentCount})`;
-      toggleCommentsBtn.classList.add("btn", "btn-link", "btn-sm");
-      toggleCommentsBtn.addEventListener("click", () => {
-        const isHidden = commentsDiv.style.display === "none";
-        commentsDiv.style.display = isHidden ? "block" : "none";
-        toggleCommentsBtn.textContent = isHidden ? `Hide Comments (${commentCount})` : `View Comments (${commentCount})`;
-      });
+      const toggleComments = document.createElement("button");
+      toggleComments.textContent = `View Comments (${(incident.comments || []).length})`;
+      toggleComments.classList.add("btn", "btn-link", "btn-sm");
+      toggleComments.onclick = () => {
+        commentsDiv.style.display = commentsDiv.style.display === "none" ? "block" : "none";
+        toggleComments.textContent = commentsDiv.style.display === "none" ? `View Comments (${(incident.comments || []).length})` : `Hide Comments (${(incident.comments || []).length})`;
+      };
 
-      li.appendChild(toggleCommentsBtn);
+      li.appendChild(toggleComments);
       li.appendChild(commentsDiv);
-      list.appendChild(li);
+      els.list.appendChild(li);
     });
   }
 
-  function createImageElement(src) {
+  function createImage(src) {
     const img = document.createElement("img");
     img.src = src;
     img.alt = "Incident attachment";
     img.classList.add("img-fluid", "rounded-top");
-    img.style.width = "100%"; // Full width to touch sides
-    img.style.height = "200px"; // Fixed height for uniform size
-    img.style.objectFit = "cover"; // Crop to fit, maintaining aspect ratio
-    img.style.display = "block"; // Ensure visibility
-    img.style.margin = "0"; // Remove margins
+    img.style.cssText = "width:100%;height:200px;object-fit:cover;display:block;margin:0;";
     img.onerror = () => {
-      console.error("Failed to load image:", src);
-      img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="; // Fallback placeholder
+      img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
       img.alt = "Failed to load image";
-      img.style.height = "200px"; // Ensure fallback has same height
-      img.style.objectFit = "cover";
     };
     return img;
   }
 
-  function createVideoElement(src) {
+  function createVideo(src) {
     const video = document.createElement("video");
     video.src = src;
     video.controls = true;
     video.classList.add("img-fluid", "rounded-top");
-    video.style.width = "100%"; // Full width to touch sides
-    video.style.height = "200px"; // Fixed height for uniform size
-    video.style.objectFit = "cover"; // Crop to fit, maintaining aspect ratio
-    video.style.display = "block"; // Ensure visibility
-    video.style.margin = "0"; // Remove margins
+    video.style.cssText = "width:100%;height:200px;object-fit:cover;display:block;margin:0;";
     video.onerror = () => {
-      console.error("Failed to load video:", src);
-      video.poster = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="; // Fallback placeholder
-      video.style.height = "200px"; // Ensure fallback has same height
-      video.style.objectFit = "cover";
+      video.poster = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
     };
     return video;
   }
 
   function renderPreviews() {
-    previewContainer.innerHTML = "";
-    if (selectedFiles.length === 0) {
-      console.log("No files selected for preview");
-      previewContainer.innerHTML = `<p class="text-muted">No files selected.</p>`;
-      return;
-    }
-
+    previewContainer.innerHTML = selectedFiles.length ? "" : '<p class="text-muted">No files selected.</p>';
     selectedFiles.forEach((file, index) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target.result;
-        console.log(`Preview file ${index}:`, file.name, result.substring(0, 50)); // Debug: Log file preview
-        if (!result.includes("data:image") && !result.includes("data:video")) {
-          console.warn(`Unsupported file format at index ${index}:`, file);
-          const placeholder = document.createElement("div");
-          placeholder.classList.add("text-danger");
-          placeholder.textContent = `Unsupported file: ${file.name}`;
-          previewContainer.appendChild(placeholder);
+      reader.onload = e => {
+        if (!e.target.result.includes("data:image") && !e.target.result.includes("data:video")) {
+          previewContainer.innerHTML += `<div class="text-danger">Unsupported file: ${file.name}</div>`;
           return;
         }
-
         const wrapper = document.createElement("div");
         wrapper.classList.add("position-relative");
-
-        let element;
-        if (result.includes("data:video")) {
-          element = createVideoElement(result);
-        } else if (result.includes("data:image")) {
-          element = createImageElement(result);
-        }
-
+        const el = e.target.result.includes("data:video") ? createVideo(e.target.result) : createImage(e.target.result);
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "×";
         removeBtn.classList.add("btn", "btn-danger", "btn-sm", "position-absolute", "top-0", "end-0");
-        removeBtn.addEventListener("click", () => {
+        removeBtn.onclick = () => {
           selectedFiles.splice(index, 1);
           renderPreviews();
-        });
-
-        wrapper.appendChild(element);
+        };
+        wrapper.appendChild(el);
         wrapper.appendChild(removeBtn);
         previewContainer.appendChild(wrapper);
-      };
-      reader.onerror = () => {
-        console.error("Error reading file:", file);
-        const placeholder = document.createElement("div");
-        placeholder.classList.add("text-danger");
-        placeholder.textContent = `Error reading file: ${file.name}`;
-        previewContainer.appendChild(placeholder);
       };
       reader.readAsDataURL(file);
     });
   }
 
-  function showToast(message, type) {
-    const toastContainer = document.createElement("div");
-    toastContainer.classList.add("toast", `bg-${type}`, "text-white", "position-fixed", "bottom-0", "end-0", "m-3");
-    toastContainer.setAttribute("role", "alert");
-    toastContainer.innerHTML = `
-      <div class="toast-body">
-        ${message}
-        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
-      </div>
-    `;
-    document.body.appendChild(toastContainer);
-    const toast = new bootstrap.Toast(toastContainer);
-    toast.show();
-    setTimeout(() => toastContainer.remove(), 3000);
+  function showToast(msg, type) {
+    const toast = document.createElement("div");
+    toast.classList.add("toast", `bg-${type}`, "text-white", "position-fixed", "bottom-0", "end-0", "m-3");
+    toast.innerHTML = `<div class="toast-body">${msg}<button class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button></div>`;
+    document.body.appendChild(toast);
+    new bootstrap.Toast(toast).show();
+    setTimeout(() => toast.remove(), 3000);
   }
 
-  attachmentsInput.addEventListener("change", () => {
-    selectedFiles = Array.from(attachmentsInput.files).filter(file =>
-      file.type.startsWith("image/") || file.type.startsWith("video/")
-    );
-    console.log("Selected files:", selectedFiles.map(f => f.name)); // Debug: Log file names
-    if (selectedFiles.length === 0) {
-      showToast("No valid image or video files selected.", "warning");
-    }
+  els.attachments.addEventListener("change", () => {
+    selectedFiles = Array.from(els.attachments.files).filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    if (!selectedFiles.length) showToast("No valid image/video files.", "warning");
     renderPreviews();
   });
 
-  form.addEventListener("submit", async (e) => {
+  els.form.addEventListener("submit", async e => {
     e.preventDefault();
-
-    if (!typeInput.value.trim() || !locationInput.value.trim() || !dateTimeInput.value || !descriptionInput.value.trim()) {
-      showToast("Please fill in all required fields.", "warning");
+    if (!els.type.value.trim() || !els.location.value.trim() || !els.dateTime.value || !els.description.value.trim()) {
+      showToast("Fill all required fields.", "warning");
       return;
     }
 
-    let attachments = [];
-    for (const file of selectedFiles) {
-      try {
-        const base64 = await toBase64(file);
-        if (base64.includes("data:image") || base64.includes("data:video")) {
-          attachments.push(base64);
-        } else {
-          console.warn("Skipping invalid file:", file.name);
-          showToast(`Skipping unsupported file: ${file.name}`, "warning");
-        }
-      } catch (err) {
-        console.error("Error converting file to Base64:", err);
-        showToast(`Error processing file: ${file.name}`, "danger");
-      }
-    }
+    const attachments = await Promise.all(selectedFiles.map(file => toBase64(file).catch(err => {
+      console.error("Base64 error:", err);
+      showToast(`Error processing file: ${file.name}`, "danger");
+      return null;
+    }))).then(results => results.filter(Boolean));
 
     const newIncident = {
-      type: typeInput.value.trim(),
-      location: locationInput.value.trim(),
-      description: descriptionInput.value.trim(),
-      datetime: dateTimeInput.value,
+      type: els.type.value.trim(),
+      location: els.location.value.trim(),
+      description: els.description.value.trim(),
+      datetime: els.dateTime.value,
       status: "Open",
       comments: [],
       attachments
     };
 
-    console.log("Submitting incident:", newIncident); // Debug: Log incident data
-
     try {
-      const response = await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newIncident)
       });
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
       fetchIncidents();
-      form.reset();
+      els.form.reset();
       selectedFiles = [];
       previewContainer.innerHTML = "";
-      showToast("Incident added successfully!", "success");
+      showToast("Incident added!", "success");
     } catch (err) {
-      console.error("Error submitting incident:", err);
+      console.error("Submit error:", err);
       showToast("Failed to add incident.", "danger");
     }
   });
@@ -371,45 +263,38 @@ document.addEventListener("DOMContentLoaded", () => {
   function toBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
-  showOpenBtn.addEventListener("click", () => fetchIncidents("Open"));
-  showAllBtn.addEventListener("click", () => fetchIncidents());
-
-  searchInput.addEventListener("input", async () => {
-    const query = searchInput.value.trim().toLowerCase();
-    if (!query) {
-      fetchIncidents();
-      return;
-    }
-
+  els.showOpen.addEventListener("click", () => fetchIncidents("Open"));
+  els.showAll.addEventListener("click", () => fetchIncidents());
+  els.search.addEventListener("input", async () => {
+    const query = els.search.value.trim().toLowerCase();
+    if (!query) return fetchIncidents();
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      const filtered = data.filter(
-        inc =>
-          (inc.type || "").toLowerCase().includes(query) ||
-          (inc.location || "").toLowerCase().includes(query)
-      );
-      renderIncidents(filtered);
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+      const data = await res.json();
+      renderIncidents(data.filter(inc =>
+        (inc.type || "").toLowerCase().includes(query) ||
+        (inc.location || "").toLowerCase().includes(query)
+      ));
     } catch (err) {
       console.error("Search error:", err);
-      list.innerHTML = `<li class="list-group-item text-danger">Failed to search incidents. Please try again.</li>`;
+      els.list.innerHTML = '<li class="list-group-item text-danger">Failed to search incidents.</li>';
     }
   });
 
-  themeToggleBtn.addEventListener("click", () => {
+  els.themeToggle.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
-    themeToggleBtn.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+    els.themeToggle.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
   });
 
-  document.getElementById("show-report").addEventListener("click", () => {
-    document.getElementById("incident-form").scrollIntoView({ behavior: "smooth" });
+  els.showReport.addEventListener("click", () => {
+    els.form.scrollIntoView({ behavior: "smooth" });
   });
 
   fetchIncidents();
